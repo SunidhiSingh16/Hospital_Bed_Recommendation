@@ -1,107 +1,176 @@
-# Hospital Bed Demand Forecasting 🏥
+# 🏥 Hospital Bed Demand Intelligence
 
-This project combines Poisson distribution with machine learning to predict hospital bed demand. It provides both statistical and ML-based forecasting approaches to help hospitals better prepare for incoming patients.
+[![Python](https://img.shields.io/badge/Python-3.10+-blue?style=flat&logo=python&logoColor=white)](https://python.org)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.31+-FF4B4B?style=flat&logo=streamlit&logoColor=white)](https://streamlit.io)
+[![scikit-learn](https://img.shields.io/badge/scikit--learn-1.4+-F7931E?style=flat&logo=scikit-learn&logoColor=white)](https://scikit-learn.org)
+[![XGBoost](https://img.shields.io/badge/XGBoost-2.0+-DD0031?style=flat)](https://xgboost.readthedocs.io)
+[![Plotly](https://img.shields.io/badge/Plotly-5.18+-3F4F75?style=flat&logo=plotly)](https://plotly.com)
+[![Deploy](https://img.shields.io/badge/Deploy-Render-46E3B7?style=flat&logo=render)](https://render.com)
+
+A multi-model demand forecasting system for hospital bed capacity planning. Combines **Poisson arrival modelling** with **Gradient Boosting** and **XGBoost** regressors in a configurable weighted ensemble, deployed as an interactive Streamlit dashboard with real-time surge alerting.
+
+> **Live Demo →** *(Deploy on Render — link after deployment)*
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                  Streamlit Dashboard                     │
+│   Config · Analysis · Forecasting · Report              │
+└───────────────────┬─────────────────────────────────────┘
+                    │
+        ┌───────────▼────────────┐
+        │   Data Pipeline        │
+        │  generate_synthetic()  │
+        │  add_dept_breakdown()  │
+        │  prepare_ml_features() │
+        └───────────┬────────────┘
+                    │
+       ┌────────────▼─────────────┐
+       │    Forecasting Engine    │
+       │                          │
+       │  ┌─────────────────────┐ │
+       │  │  Poisson Predictor  │ │  ← MLE of daily arrival rate λ
+       │  │  scipy.stats.poisson│ │    80% prediction interval
+       │  └─────────────────────┘ │
+       │                          │
+       │  ┌──────────┐ ┌────────┐ │
+       │  │   GBM    │ │XGBoost │ │  ← Temporal feature regression
+       │  │ sklearn  │ │ xgb    │ │    Train/test split 80/20
+       │  └────┬─────┘ └───┬────┘ │
+       │       │           │      │
+       │  ┌────▼───────────▼────┐ │
+       │  │  Ensemble (weighted) │ │  ← Poisson 25% | GBM 40% | XGB 35%
+       │  └─────────────────────┘ │
+       └──────────────────────────┘
+                    │
+       ┌────────────▼──────────────┐
+       │  Outputs                  │
+       │  · Next-day point pred.   │
+       │  · 7-day forward forecast │
+       │  · 95% confidence bands   │
+       │  · Surge occupancy alert  │
+       │  · Dept-level breakdown   │
+       │  · Downloadable report    │
+       └───────────────────────────┘
+```
+
+---
 
 ## Features
 
-- 📊 Poisson distribution modeling for admission predictions
-- 🤖 Machine learning enhancement (GBM and XGBoost)
-- 📈 Interactive visualizations
-- 📱 Web-based dashboard using Streamlit
-- 📄 Downloadable prediction reports
+- **Dual forecasting paradigm** — statistical Poisson model (interpretable baseline) combined with ensemble ML for capturing non-linear temporal patterns
+- **Weighted ensemble** — configurable Poisson + GBM + XGBoost combination with per-model importance attribution
+- **7-day forward forecast** — extrapolated predictions with ±1.96σ confidence bands visualised against bed capacity
+- **Real-time surge alerting** — threshold-based occupancy alerts (Normal < 70% < Elevated < 85% < Surge) with colour-coded status panels
+- **Department-level decomposition** — ICU, Emergency, and General Ward admission streams via stochastic proportional allocation
+- **Configurable scenario engine** — Normal, High-Variation, Pandemic, Summer-Surge, and fully custom parameter modes
+- **Downloadable outputs** — Markdown executive report and CSV predictions per run
 
-## Installation
+---
 
-1. Clone this repository:
+## Tech Stack
+
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| Frontend | Streamlit 1.31+ | Interactive dashboard, session state |
+| Visualisation | Plotly 5.18+ | Interactive charts, stacked area, confidence bands |
+| Statistical Model | SciPy (poisson) | Poisson MLE, PMF, prediction intervals |
+| ML Models | scikit-learn GBM, XGBoost | Gradient boosted regression |
+| Data | pandas, numpy | Feature engineering, rolling statistics |
+| Deployment | Render (render.yaml) | Managed PaaS, free tier |
+
+---
+
+## Quickstart
+
 ```bash
+# Clone
 git clone <repository-url>
-cd hospital-bed-forecasting
-```
+cd hospital-bed-recommendation
 
-2. Create a virtual environment (recommended):
-```bash
+# Virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
+source venv/bin/activate        # Windows: venv\Scripts\activate
 
-3. Install dependencies:
-```bash
+# Install dependencies
 pip install -r requirements.txt
-```
 
-## Usage
-
-1. Download the dataset:
-```bash
-python download_data.py
-```
-
-2. Run the Streamlit app:
-```bash
+# Run
 streamlit run app.py
+# → http://localhost:8501
 ```
 
-3. Open your browser and navigate to `http://localhost:8501`
+---
 
-## Deploy On Render
+## Deploy on Render
 
-Use a Web Service and ensure Render starts Streamlit (not `python app.py`).
+The repo includes `render.yaml` — import it into Render as a **Web Service**.
 
-- Build Command:
-```bash
-pip install -r requirements.txt
-```
-- Start Command:
-```bash
-streamlit run app.py --server.port $PORT --server.address 0.0.0.0
-```
+| Setting | Value |
+|---------|-------|
+| Build Command | `pip install -r requirements.txt` |
+| Start Command | `streamlit run app.py --server.port $PORT --server.address 0.0.0.0` |
+| Environment | Python |
+| Plan | Free |
 
-This repository also includes `render.yaml` with the same settings.
+---
 
 ## Project Structure
 
 ```
-hospital-bed-forecasting/
+hospital-bed-recommendation/
+├── app.py                    # Streamlit dashboard (4 tabs)
+├── requirements.txt
+├── render.yaml               # Render deployment config
+├── .streamlit/
+│   └── config.toml           # Dark professional theme
 ├── src/
-│   ├── data_loader.py      # Data loading and preprocessing
-│   ├── poisson_model.py    # Poisson distribution implementation
-│   └── ml_model.py         # Machine learning model implementation
-├── data/                   # Data directory
-├── app.py                  # Streamlit dashboard
-├── requirements.txt        # Project dependencies
-└── README.md              # Project documentation
+│   ├── data_loader.py        # Synthetic data generation + dept breakdown
+│   ├── poisson_model.py      # Poisson MLE predictor
+│   ├── ml_model.py           # GBM / XGBoost regressor wrapper
+│   └── ensemble_model.py     # Weighted ensemble + forward forecaster
+└── data/
+    └── hospital_admissions.csv
 ```
 
-## Models
+---
 
-### 1. Poisson Distribution
-- Uses historical admission data to model random arrival patterns
-- Provides probability distribution for different admission numbers
-- Calculates confidence intervals for predictions
+## Model Details
 
-### 2. Machine Learning Enhancement
-- Gradient Boosting Machine (GBM)
-- XGBoost
-- Features include:
-  - Day of week
-  - Month
-  - Weekend indicator
-  - Rolling statistics
+### Poisson Arrival Model
+- Fits λ (arrival rate) as MLE of trailing 30-day window: `λ̂ = mean(X)`
+- Computes PMF over discrete admission range
+- Returns highest-density 80% prediction interval
 
-## Contributing
+### Gradient Boosting / XGBoost
+- Features: `day_of_week`, `month`, `is_weekend`, `rolling_mean_7d`, `rolling_std_7d`
+- 80/20 chronological train/test split (no data leakage)
+- Evaluated on MAE and RMSE; feature importance from `feature_importances_`
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+### Ensemble
+- Weighted linear combination: `ŷ = 0.25·Poisson + 0.40·GBM + 0.35·XGBoost`
+- Weights are configurable — tunable for stable vs. high-variance admission regimes
+- Feature importance averaged across GBM and XGBoost sub-models
+
+### 7-Day Forward Forecast
+- Extrapolates over future calendar features with frozen rolling statistics
+- Confidence bands: `ŷ ± 1.96 · σ_rolling` (approximate 95% interval)
+- Plotted against user-defined bed capacity threshold
+
+---
+
+## What This Demonstrates
+
+- End-to-end ML pipeline: data generation → feature engineering → multi-model training → evaluation → deployment
+- Practical ensemble design with interpretable weighting
+- Statistical + ML hybrid forecasting (Poisson as prior, tree models for residual patterns)
+- Production-ready Streamlit deployment with session state management
+
+---
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- Hospital admission dataset from Kaggle
-- Streamlit for the web interface
-- scikit-learn and XGBoost for machine learning models "# Hospita_lBed_Recommendation" 
+MIT License
