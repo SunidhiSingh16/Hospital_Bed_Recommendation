@@ -1,5 +1,5 @@
 # 🏥 Hospital Bed Demand Intelligence
-
+[![Live Demo](https://img.shields.io/badge/Live-Demo-success?style=flat&logo=vercel)](https://forecare.streamlit.app/)
 [![Python](https://img.shields.io/badge/Python-3.10+-blue?style=flat&logo=python&logoColor=white)](https://python.org)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.31+-FF4B4B?style=flat&logo=streamlit&logoColor=white)](https://streamlit.io)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-1.4+-F7931E?style=flat&logo=scikit-learn&logoColor=white)](https://scikit-learn.org)
